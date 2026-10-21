@@ -1,33 +1,38 @@
-# 📄 PaperView — PDF Reader
+# 📄 PaperView — Read & Study
 
-A simple PDF reader built with HTML, CSS, and JavaScript. Open local documents in a clean purple interface with light and dark themes.
+A PDF reader and study workspace built with HTML, CSS, and vanilla JavaScript. Read local PDFs, write notes, bookmark page numbers, and stay focused with a study timer.
 
 ## Features
 
-- Open PDFs from your device
-- Drag and drop a PDF to read it
-- Light and dark mode with saved theme preference
-- Fullscreen reading on supported browsers
-- Open the document in a separate tab
-- Download the selected PDF
-- Display the filename and file size
-- Responsive layout
-- Local file handling without uploads
+- 📂 Open local PDF files
+- 🖱️ Drag-and-drop upload
+- 📝 Write and automatically save notes for each document
+- 🔖 Add, remove, and revisit page bookmarks
+- 📍 Jump to a specified page
+- 📤 Export notes and bookmarks as a `.txt` file
+- ⏱️ Study timer with start, pause, reset, and custom duration
+- 🎯 Focus mode that hides study tools
+- 🌙 Light and dark themes
+- ⛶ Fullscreen reading where supported
+- ⬇️ Download the selected PDF
+- 📱 Responsive layout
 
-## Built With
+## Technologies
 
 - HTML5
 - CSS3
 - Vanilla JavaScript
+- Local Storage
+- Web Crypto API, when available
 - Browser’s built-in PDF viewer
 
 ## Getting Started
 
-1. Download or clone this repository.
+1. Download or clone the repository.
 2. Open `index.html` in your browser.
-3. Click **Choose PDF** or drag a PDF into the upload area.
+3. Click **Choose PDF** or drop a PDF into the upload area.
 
-No installation, API key, or build tools are required.
+No installation, dependencies, API keys, or build commands are required.
 
 ## Project Structure
 
@@ -37,48 +42,95 @@ paperview/
 └── README.md
 ```
 
-## How to Use
+## Using PaperView
 
-| Control | Action |
-|---|---|
-| Choose PDF | Select a local PDF |
-| Open another | Replace the current document |
-| Open in tab | Open the PDF in a separate browser tab |
-| Download | Save a copy of the selected file |
-| Fullscreen | Expand the reader where supported |
-| Close | Close the document |
-| Dark mode / Light mode | Switch the interface theme |
+### Reading PDFs
 
-Use the browser’s PDF toolbar for page navigation, search, zoom, and printing. Available controls depend on your browser.
+Choose a local PDF to open it. Use the browser’s embedded PDF toolbar for zoom, search, printing, and page navigation.
 
-## Privacy
+Select **Open in tab** if the embedded viewer does not work.
 
-PDF files are processed locally through browser object URLs. The application does not upload documents to a server.
+### Notes
 
-Only the theme preference is saved in local storage when available. Documents are not saved by the app or restored after a refresh.
+Write in **My notes** to save notes automatically.
+
+Notes are stored in this browser and associated with the selected document. Reopening the document restores them when browser storage is available.
+
+Click **Export notes (.txt)** to download your notes and bookmarked page numbers.
+
+### Bookmarks
+
+1. Enter a page number in **Page shortcuts**.
+2. Click **Bookmark this number**.
+3. Click a saved bookmark to request that page.
+4. Click **×** to remove a bookmark.
+
+Enter the page number manually: the app cannot detect the embedded viewer’s current page.
+
+### Study Timer
+
+- Enter a duration from **1 to 180 minutes** and click **Set**.
+- Click **Start** to begin.
+- Click **Pause** to pause.
+- Click **Reset** to restore the selected duration.
+
+The timer displays a completion message. It does not send system notifications or play an alarm.
+
+### Focus and Fullscreen
+
+**Focus** hides the header and study sidebar. Click **Exit focus** to restore them.
+
+**Fullscreen** expands the workspace on supported browsers.
+
+## Privacy and Storage
+
+- PDF files remain on your device and are not uploaded.
+- Notes, bookmarks, and theme preferences use browser Local Storage.
+- The PDF itself is not saved by the app.
+- Reopen your PDF after refreshing the page.
+- Notes do not sync between devices or browsers.
+- Clearing browser data may delete saved notes and bookmarks.
+- Export important notes to keep a separate copy.
+
+When available, the Web Crypto API calculates a local file hash to identify a document. Otherwise, the app uses its filename, size, and modification date.
 
 ## Browser Compatibility
 
-A browser with a built-in PDF viewer is required for embedded reading. Mobile behavior and fullscreen support vary.
+Embedded PDF rendering requires a browser with a built-in PDF viewer.
 
-If a PDF does not appear, use **Open in tab** or **Download**.
+Page shortcuts, fullscreen, and mobile PDF viewing depend on browser support. Use **Open in tab** or **Download** if embedded viewing is unavailable.
 
 ## Limitations
 
-- PDF viewing controls depend on the browser.
-- Dark mode changes the app interface, not the PDF’s page colors.
-- The app does not edit, annotate, merge, or convert PDFs.
-- A PDF signature check does not guarantee that a file is valid or readable.
+- The app cannot detect the PDF viewer’s current page or total page count.
+- Page shortcuts cannot verify whether a page exists.
+- Dark mode changes the interface, not PDF page colors.
+- The app does not edit or annotate the PDF itself.
+- Saved notes require available browser storage.
+- The timer does not continue after closing or refreshing the app.
+- PDF signature checking does not guarantee that a file is valid or readable.
 
 ## Customization
 
-Edit the CSS variables in `index.html` to change the theme:
+Change the CSS variables in `index.html` to customize the interface:
 
 ```css
 :root {
   --bg: #f5f3ff;
-  --surface: #ffffff;
+  --panel: #ffffff;
   --text: #28233f;
-  --primary: #7955db;
+  --accent: #7955db;
+  --soft: #efe9ff;
 }
 ```
+
+Edit the `body.dark` variables to customize dark mode.
+
+## Possible Future Improvements
+
+- PDF.js integration for consistent rendering
+- Automatic page count and reading progress
+- Text highlighting and PDF annotations
+- Thumbnail navigation
+- Notes import and backup restoration
+- Optional timer sounds
