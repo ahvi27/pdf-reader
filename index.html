@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PaperView — PDF Reader</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f3ff;
+      --surface: #ffffff;
+      --text: #28233f;
+      --muted: #77718b;
+      --border: #e5dff5;
+      --primary: #7955db;
+      --hover: #eee8fc;
+    }
+
+    body.dark {
+      color-scheme: dark;
+      --bg: #15121f;
+      --surface: #211c30;
+      --text: #f2edff;
+      --muted: #b2a9c8;
+      --border: #383047;
+      --primary: #b79aff;
+      --hover: #352947;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, a, label { -webkit-tap-highlight-color: transparent; }
+
+    button, .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button:hover, .button:hover { background: var(--hover); }
+
+    :focus-visible {
+      outline: 3px solid var(--primary);
+      outline-offset: 4px;
+    }
+
+    .primary {
+      background: #7955db;
+      border-color: #7955db;
+      color: white;
+    }
+
+    .primary:hover { background: #6743c5; }
+
+    [hidden] { display: none !important; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 5%;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: #7955db;
+      color: white;
+      font-size: 23px;
+    }
+
+    .brand strong { font-size: 21px; }
+    .brand small { display: block; color: var(--muted); }
+
+    main {
+      width: min(1400px, 94%);
+      margin: 28px auto;
+    }
+
+    .welcome {
+      max-width: 720px;
+      margin: 65px auto;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 7px 13px;
+      border-radius: 30px;
+      background: var(--hover);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 20px 0 12px;
+      font-size: clamp(32px, 6vw, 52px);
+      letter-spacing: -2px;
+    }
+
+    .intro {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .dropzone {
+      margin-top: 30px;
+      padding: 45px 22px;
+      border: 2px dashed var(--border);
+      border-radius: 24px;
+      background: var(--surface);
+      transition: border-color .2s, background .2s;
+    }
+
+    .dropzone.dragging {
+      border-color: var(--primary);
+      background: var(--hover);
+    }
+
+    .file-icon { font-size: 52px; }
+    .dropzone h2 { font-size: 19px; }
+    .dropzone p { color: var(--muted); }
+
+    .privacy {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .reader {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: 0 18px 60px #24144910;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .file-details { min-width: 0; flex: 1; }
+
+    .file-name {
+      display: block;
+      max-width: 460px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-weight: 650;
+    }
+
+    .file-size {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    iframe {
+      display: block;
+      width: 100%;
+      height: 76vh;
+      border: 0;
+      background: #52525b;
+    }
+
+    .reader:fullscreen {
+      display: flex;
+      flex-direction: column;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .reader:fullscreen iframe { flex: 1; height: auto; }
+
+    .hint {
+      padding: 12px 16px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    #status {
+      min-height: 24px;
+      margin: 16px 0;
+      text-align: center;
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 16px; }
+      .brand small { display: none; }
+      .welcome { margin: 35px auto; }
+      .toolbar { align-items: flex-start; }
+      .file-details { flex-basis: 100%; }
+      .actions { width: 100%; }
+      .actions button, .actions a { flex: 1; }
+      iframe { height: 68vh; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo" aria-hidden="true">▤</span>
+      <div>
+        <strong>PaperView</strong>
+        <small>Your quiet space for reading</small>
+      </div>
+    </div>
+
+    <button id="themeButton" type="button" aria-pressed="false">
+      Dark mode
+    </button>
+  </header>
+
+  <main>
+    <input
+      type="file"
+      id="fileInput"
+      accept=".pdf,application/pdf"
+      hidden
+    />
+
+    <section class="welcome" id="welcome">
+      <span class="badge">SIMPLE · PRIVATE · FREE</span>
+
+      <h1>A better place for your PDFs.</h1>
+
+      <p class="intro">
+        Open your notes, textbooks, and documents.<br />
+        Choose a PDF to start reading.
+      </p>
+
+      <div class="dropzone" id="dropzone">
+        <div class="file-icon" aria-hidden="true">📄</div>
+        <h2>Drop your PDF here</h2>
+        <p>or select one from your device</p>
+        <button class="primary" id="chooseButton" type="button">
+          Choose PDF
+        </button>
+      </div>
+
+      <p class="privacy">
+        No account needed. Your document is never uploaded.
+      </p>
+    </section>
+
+    <section class="reader" id="reader" aria-label="PDF reader" hidden>
+      <div class="toolbar">
+        <div class="file-details">
+          <span class="file-name" id="fileName"></span>
+          <span class="file-size" id="fileSize"></span>
+        </div>
+
+        <div class="actions">
+          <button id="replaceButton" type="button">Open another</button>
+          <a id="openLink" class="button" target="_blank" rel="noopener">
+            Open in tab
+          </a>
+          <a id="downloadLink" class="button">Download</a>
+          <button id="fullscreenButton" type="button">Fullscreen</button>
+          <button id="closeButton" type="button">Close</button>
+        </div>
+      </div>
+
+      <iframe id="pdfFrame" title="Selected PDF document"></iframe>
+
+      <p class="hint">
+        Use your browser’s PDF toolbar for page navigation, search, zoom,
+        and printing. If the embedded viewer is unavailable, choose
+        “Open in tab” or “Download”.
+      </p>
+    </section>
+
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    const fileInput = $("fileInput");
+    const reader = $("reader");
+    const welcome = $("welcome");
+    const frame = $("pdfFrame");
+    const dropzone = $("dropzone");
+    const status = $("status");
+
+    let currentURL = null;
+
+    // Read a saved theme preference when storage is available.
+    try {
+      document.body.classList.toggle(
+        "dark",
+        localStorage.getItem("paperview-theme") === "dark"
+      );
+    } catch {
+      // The reader still works when browser storage is restricted.
+    }
+
+    function updateThemeButton() {
+      const dark = document.body.classList.contains("dark");
+      $("themeButton").textContent = dark ? "Light mode" : "Dark mode";
+      $("themeButton").setAttribute("aria-pressed", String(dark));
+    }
+
+    updateThemeButton();
+
+    $("themeButton").addEventListener("click", () => {
+      const dark = document.body.classList.toggle("dark");
+      updateThemeButton();
+
+      try {
+        localStorage.setItem("paperview-theme", dark ? "dark" : "light");
+      } catch {}
+    });
+
+    function chooseFile() {
+      // Allow selecting the same file again.
+      fileInput.value = "";
+      fileInput.click();
+    }
+
+    $("chooseButton").addEventListener("click", chooseFile);
+    $("replaceButton").addEventListener("click", chooseFile);
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return `${bytes} bytes`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    async function openPDF(file) {
+      if (!file) return;
+
+      status.textContent = "Checking PDF…";
+
+      try {
+        // Check the PDF signature, rather than trusting the extension alone.
+        const bytes = new Uint8Array(
+          await file.slice(0, 1024).arrayBuffer()
+        );
+
+        const header = new TextDecoder("latin1").decode(bytes);
+
+        if (!header.includes("%PDF-")) {
+          status.textContent = "Please choose a valid PDF file.";
+          return;
+        }
+
+        const pdfBlob = new Blob([file], { type: "application/pdf" });
+        const nextURL = URL.createObjectURL(pdfBlob);
+        const previousURL = currentURL;
+
+        currentURL = nextURL;
+        frame.src = nextURL;
+
+        $("fileName").textContent = file.name;
+        $("fileName").title = file.name;
+        $("fileSize").textContent = formatSize(file.size);
+
+        $("openLink").href = nextURL;
+        $("downloadLink").href = nextURL;
+        $("downloadLink").download = file.name;
+
+        welcome.hidden = true;
+        reader.hidden = false;
+
+        if (previousURL) URL.revokeObjectURL(previousURL);
+
+        status.textContent = "PDF selected. Read using the viewer below.";
+        $("replaceButton").focus();
+      } catch {
+        status.textContent = "This file could not be read. Please try again.";
+      }
+    }
+
+    fileInput.addEventListener("change", () => {
+      openPDF(fileInput.files[0]);
+    });
+
+    // Prevent the browser from navigating away when a file is dropped.
+    window.addEventListener("dragover", event => event.preventDefault());
+    window.addEventListener("drop", event => event.preventDefault());
+
+    let dragDepth = 0;
+
+    dropzone.addEventListener("dragenter", event => {
+      event.preventDefault();
+      dragDepth++;
+      dropzone.classList.add("dragging");
+    });
+
+    dropzone.addEventListener("dragover", event => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    });
+
+    dropzone.addEventListener("dragleave", () => {
+      dragDepth--;
+      if (dragDepth <= 0) {
+        dragDepth = 0;
+        dropzone.classList.remove("dragging");
+      }
+    });
+
+    dropzone.addEventListener("drop", event => {
+      event.preventDefault();
+      dragDepth = 0;
+      dropzone.classList.remove("dragging");
+      openPDF(event.dataTransfer.files[0]);
+    });
+
+    if (!document.fullscreenEnabled) {
+      $("fullscreenButton").hidden = true;
+    }
+
+    $("fullscreenButton").addEventListener("click", async () => {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else {
+          await reader.requestFullscreen();
+        }
+      } catch {
+        status.textContent = "Fullscreen is unavailable in this browser.";
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      $("fullscreenButton").textContent =
+        document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
+    });
+
+    $("closeButton").addEventListener("click", async () => {
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch {}
+      }
+
+      frame.src = "about:blank";
+
+      if (currentURL) {
+        URL.revokeObjectURL(currentURL);
+        currentURL = null;
+      }
+
+      $("openLink").removeAttribute("href");
+      $("downloadLink").removeAttribute("href");
+      fileInput.value = "";
+
+      reader.hidden = true;
+      welcome.hidden = false;
+      status.textContent = "Document closed.";
+      $("chooseButton").focus();
+    });
+
+    window.addEventListener("pagehide", event => {
+      if (!event.persisted && currentURL) {
+        URL.revokeObjectURL(currentURL);
+      }
+    });
+  </script>
+</body>
+</html>
