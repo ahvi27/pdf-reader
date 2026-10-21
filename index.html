@@ -1,512 +1,978 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PaperView — PDF Reader</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaperView — Read & Study</title>
 
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f5f3ff;
-      --surface: #ffffff;
-      --text: #28233f;
-      --muted: #77718b;
-      --border: #e5dff5;
-      --primary: #7955db;
-      --hover: #eee8fc;
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f3ff;
+    --panel: #ffffff;
+    --text: #28233f;
+    --muted: #77718b;
+    --border: #e7e1f3;
+    --accent: #7955db;
+    --soft: #efe9ff;
+    --shadow: 0 18px 60px #3522570a;
+  }
+
+  body.dark {
+    color-scheme: dark;
+    --bg: #15121f;
+    --panel: #211c30;
+    --text: #f2edff;
+    --muted: #b4aac8;
+    --border: #393047;
+    --accent: #b89aff;
+    --soft: #342647;
+    --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+  }
+
+  button, input, textarea, a { font: inherit; }
+
+  button, .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 9px 13px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  button:hover, .button:hover { background: var(--soft); }
+
+  button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+
+  .primary {
+    background: #7955db;
+    border-color: #7955db;
+    color: white;
+  }
+
+  .primary:hover { background: #6843c6; }
+
+  :focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  [hidden] { display: none !important; }
+
+  input, textarea {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 18px 4%;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+
+  .logo {
+    display: grid;
+    place-items: center;
+    width: 43px;
+    height: 43px;
+    border-radius: 13px;
+    background: #7955db;
+    color: white;
+    font-size: 24px;
+  }
+
+  .brand strong { font-size: 21px; }
+  .brand small { display: block; color: var(--muted); }
+
+  main { width: min(1600px, 94%); margin: 24px auto; }
+
+  .welcome {
+    max-width: 740px;
+    margin: 55px auto;
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--soft);
+    color: var(--accent);
+    padding: 7px 13px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-size: clamp(32px, 6vw, 54px);
+    letter-spacing: -2px;
+    margin: 20px 0 12px;
+  }
+
+  .muted { color: var(--muted); }
+  .intro { line-height: 1.7; }
+
+  .dropzone {
+    margin: 30px 0 20px;
+    padding: 45px 20px;
+    border: 2px dashed var(--border);
+    border-radius: 25px;
+    background: var(--panel);
+  }
+
+  .dropzone.dragging {
+    border-color: var(--accent);
+    background: var(--soft);
+  }
+
+  .document-icon { font-size: 50px; }
+  .dropzone h2 { font-size: 19px; }
+
+  .feature-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .feature-list span {
+    padding: 8px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+  }
+
+  .workspace {
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .file-info { min-width: 0; flex: 1; }
+
+  #fileName {
+    display: block;
+    max-width: 450px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 650;
+  }
+
+  #fileSize {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 7px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+  }
+
+  .viewer { min-width: 0; background: #52525b; }
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 77vh;
+    border: 0;
+  }
+
+  aside {
+    padding: 18px;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    max-height: 77vh;
+  }
+
+  .section + .section {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    margin-top: 20px;
+  }
+
+  .section h2 { font-size: 15px; margin: 0 0 12px; }
+
+  .small { font-size: 12px; line-height: 1.6; }
+
+  .row { display: flex; align-items: center; gap: 8px; }
+  .wrap { flex-wrap: wrap; }
+  .row input { min-width: 0; }
+
+  #pageInput { width: 80px; }
+
+  textarea {
+    display: block;
+    width: 100%;
+    min-height: 180px;
+    resize: vertical;
+    line-height: 1.6;
+    font-size: 13px;
+  }
+
+  .save-status {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin: 8px 0;
+  }
+
+  .timer {
+    font-size: 40px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--accent);
+    margin: 10px 0;
+  }
+
+  #minutes { width: 76px; }
+
+  .bookmarks {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bookmark {
+    display: flex;
+    gap: 6px;
+  }
+
+  .bookmark .jump {
+    flex: 1;
+    justify-content: flex-start;
+    overflow-wrap: anywhere;
+  }
+
+  .hint {
+    color: var(--muted);
+    padding: 11px 15px;
+    margin: 0;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  #status {
+    min-height: 24px;
+    margin: 14px 0;
+    color: var(--accent);
+    text-align: center;
+    font-size: 13px;
+  }
+
+  body.focus header { display: none; }
+  body.focus main { width: 100%; margin: 0; }
+  body.focus .workspace { border-radius: 0; }
+  body.focus .layout { grid-template-columns: 1fr; }
+  body.focus aside { display: none; }
+  body.focus iframe { height: 85vh; }
+
+  .workspace:fullscreen {
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .workspace:fullscreen .layout { flex: 1; min-height: 0; }
+  .workspace:fullscreen .viewer { height: 100%; }
+  .workspace:fullscreen iframe { height: 100%; }
+  .workspace:fullscreen aside { max-height: 100%; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside {
+      max-height: none;
+      border-left: 0;
+      border-top: 1px solid var(--border);
     }
+    iframe { height: 65vh; }
+    .file-info { flex-basis: 100%; }
+    .workspace:fullscreen .layout { overflow: auto; }
+    .workspace:fullscreen .viewer { height: 70vh; }
+  }
 
-    body.dark {
-      color-scheme: dark;
-      --bg: #15121f;
-      --surface: #211c30;
-      --text: #f2edff;
-      --muted: #b2a9c8;
-      --border: #383047;
-      --primary: #b79aff;
-      --hover: #352947;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    button, a, label { -webkit-tap-highlight-color: transparent; }
-
-    button, .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 10px 16px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--surface);
-      color: var(--text);
-      font: inherit;
-      font-size: 14px;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    button:hover, .button:hover { background: var(--hover); }
-
-    :focus-visible {
-      outline: 3px solid var(--primary);
-      outline-offset: 4px;
-    }
-
-    .primary {
-      background: #7955db;
-      border-color: #7955db;
-      color: white;
-    }
-
-    .primary:hover { background: #6743c5; }
-
-    [hidden] { display: none !important; }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 20px 5%;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo {
-      display: grid;
-      place-items: center;
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: #7955db;
-      color: white;
-      font-size: 23px;
-    }
-
-    .brand strong { font-size: 21px; }
-    .brand small { display: block; color: var(--muted); }
-
-    main {
-      width: min(1400px, 94%);
-      margin: 28px auto;
-    }
-
-    .welcome {
-      max-width: 720px;
-      margin: 65px auto;
-      text-align: center;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 7px 13px;
-      border-radius: 30px;
-      background: var(--hover);
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    h1 {
-      margin: 20px 0 12px;
-      font-size: clamp(32px, 6vw, 52px);
-      letter-spacing: -2px;
-    }
-
-    .intro {
-      color: var(--muted);
-      line-height: 1.7;
-    }
-
-    .dropzone {
-      margin-top: 30px;
-      padding: 45px 22px;
-      border: 2px dashed var(--border);
-      border-radius: 24px;
-      background: var(--surface);
-      transition: border-color .2s, background .2s;
-    }
-
-    .dropzone.dragging {
-      border-color: var(--primary);
-      background: var(--hover);
-    }
-
-    .file-icon { font-size: 52px; }
-    .dropzone h2 { font-size: 19px; }
-    .dropzone p { color: var(--muted); }
-
-    .privacy {
-      margin-top: 22px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .reader {
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: var(--surface);
-      box-shadow: 0 18px 60px #24144910;
-    }
-
-    .toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 14px;
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .file-details { min-width: 0; flex: 1; }
-
-    .file-name {
-      display: block;
-      max-width: 460px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      font-weight: 650;
-    }
-
-    .file-size {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    iframe {
-      display: block;
-      width: 100%;
-      height: 76vh;
-      border: 0;
-      background: #52525b;
-    }
-
-    .reader:fullscreen {
-      display: flex;
-      flex-direction: column;
-      border: 0;
-      border-radius: 0;
-    }
-
-    .reader:fullscreen iframe { flex: 1; height: auto; }
-
-    .hint {
-      padding: 12px 16px;
-      margin: 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    #status {
-      min-height: 24px;
-      margin: 16px 0;
-      text-align: center;
-      color: var(--primary);
-      font-size: 14px;
-    }
-
-    @media (max-width: 600px) {
-      header { padding: 16px; }
-      .brand small { display: none; }
-      .welcome { margin: 35px auto; }
-      .toolbar { align-items: flex-start; }
-      .file-details { flex-basis: 100%; }
-      .actions { width: 100%; }
-      .actions button, .actions a { flex: 1; }
-      iframe { height: 68vh; }
-    }
-  </style>
+  @media (max-width: 550px) {
+    header { padding: 14px; }
+    .brand small { display: none; }
+    .actions { width: 100%; }
+    .actions button, .actions a { flex: 1; }
+    .welcome { margin-top: 30px; }
+  }
+</style>
 </head>
 
 <body>
-  <header>
-    <div class="brand">
-      <span class="logo" aria-hidden="true">▤</span>
-      <div>
-        <strong>PaperView</strong>
-        <small>Your quiet space for reading</small>
+<header>
+  <div class="brand">
+    <span class="logo" aria-hidden="true">▤</span>
+    <div>
+      <strong>PaperView</strong>
+      <small>Read. Take notes. Stay focused.</small>
+    </div>
+  </div>
+  <button id="themeButton" type="button" aria-pressed="false">
+    Dark mode
+  </button>
+</header>
+
+<main>
+  <input id="fileInput" type="file" accept=".pdf,application/pdf" hidden>
+
+  <section class="welcome" id="welcome">
+    <span class="badge">YOUR PERSONAL STUDY SPACE</span>
+    <h1>Make every page count.</h1>
+    <p class="muted intro">
+      Read PDFs, capture ideas, bookmark important pages,<br>
+      and study with a focused timer.
+    </p>
+
+    <div class="dropzone" id="dropzone">
+      <div class="document-icon" aria-hidden="true">📄</div>
+      <h2>Drop your PDF here</h2>
+      <p class="muted">or choose a document from your device</p>
+      <button class="primary" id="chooseButton" type="button">
+        Choose PDF
+      </button>
+    </div>
+
+    <div class="feature-list">
+      <span>📝 Saved notes</span>
+      <span>🔖 Bookmarks</span>
+      <span>⏱ Study timer</span>
+      <span>🌙 Dark mode</span>
+    </div>
+
+    <p class="muted small">
+      PDFs are not uploaded. Notes and bookmarks are saved in this browser
+      when storage is available. Export notes to keep a separate copy.
+    </p>
+  </section>
+
+  <section class="workspace" id="workspace" aria-label="PDF workspace" hidden>
+    <div class="toolbar">
+      <div class="file-info">
+        <span id="fileName"></span>
+        <span id="fileSize"></span>
+      </div>
+
+      <div class="actions">
+        <button id="replaceButton" type="button">Open PDF</button>
+        <button id="focusButton" type="button" aria-pressed="false">
+          Focus
+        </button>
+        <button id="fullscreenButton" type="button">Fullscreen</button>
+        <a id="openLink" class="button" target="_blank" rel="noopener">
+          Open in tab
+        </a>
+        <a id="downloadLink" class="button">Download</a>
+        <button id="closeButton" type="button">Close</button>
       </div>
     </div>
 
-    <button id="themeButton" type="button" aria-pressed="false">
-      Dark mode
-    </button>
-  </header>
-
-  <main>
-    <input
-      type="file"
-      id="fileInput"
-      accept=".pdf,application/pdf"
-      hidden
-    />
-
-    <section class="welcome" id="welcome">
-      <span class="badge">SIMPLE · PRIVATE · FREE</span>
-
-      <h1>A better place for your PDFs.</h1>
-
-      <p class="intro">
-        Open your notes, textbooks, and documents.<br />
-        Choose a PDF to start reading.
-      </p>
-
-      <div class="dropzone" id="dropzone">
-        <div class="file-icon" aria-hidden="true">📄</div>
-        <h2>Drop your PDF here</h2>
-        <p>or select one from your device</p>
-        <button class="primary" id="chooseButton" type="button">
-          Choose PDF
-        </button>
+    <div class="layout">
+      <div class="viewer">
+        <iframe id="pdfFrame" title="Selected PDF document"></iframe>
       </div>
 
-      <p class="privacy">
-        No account needed. Your document is never uploaded.
-      </p>
-    </section>
+      <aside aria-label="Study tools">
+        <section class="section">
+          <h2>📍 Page shortcuts</h2>
+          <form id="pageForm" class="row">
+            <label for="pageInput" class="small">Page</label>
+            <input id="pageInput" type="number" min="1" step="1" value="1"
+                   required aria-label="Page number">
+            <button type="submit">Go</button>
+          </form>
 
-    <section class="reader" id="reader" aria-label="PDF reader" hidden>
-      <div class="toolbar">
-        <div class="file-details">
-          <span class="file-name" id="fileName"></span>
-          <span class="file-size" id="fileSize"></span>
-        </div>
+          <p class="muted small">
+            Enter a page to jump or bookmark it. Page shortcuts depend on
+            your browser’s PDF viewer.
+          </p>
 
-        <div class="actions">
-          <button id="replaceButton" type="button">Open another</button>
-          <a id="openLink" class="button" target="_blank" rel="noopener">
-            Open in tab
-          </a>
-          <a id="downloadLink" class="button">Download</a>
-          <button id="fullscreenButton" type="button">Fullscreen</button>
-          <button id="closeButton" type="button">Close</button>
-        </div>
-      </div>
+          <button id="bookmarkButton" type="button">
+            + Bookmark this number
+          </button>
+          <ul class="bookmarks" id="bookmarkList"></ul>
+          <p id="emptyBookmarks" class="muted small">No bookmarks yet.</p>
+        </section>
 
-      <iframe id="pdfFrame" title="Selected PDF document"></iframe>
+        <section class="section">
+          <h2>📝 My notes</h2>
+          <label for="notes" class="small muted">
+            Key ideas, formulas, or questions
+          </label>
+          <textarea id="notes" placeholder="Start writing your notes…"></textarea>
+          <span class="save-status" id="saveStatus"></span>
+          <button id="exportButton" type="button">Export notes (.txt)</button>
+        </section>
 
-      <p class="hint">
-        Use your browser’s PDF toolbar for page navigation, search, zoom,
-        and printing. If the embedded viewer is unavailable, choose
-        “Open in tab” or “Download”.
-      </p>
-    </section>
+        <section class="section">
+          <h2>⏱ Study timer</h2>
+          <div class="row">
+            <label for="minutes" class="small">Minutes</label>
+            <input id="minutes" type="number" min="1" max="180"
+                   step="1" value="25">
+            <button id="setTimerButton" type="button">Set</button>
+          </div>
 
-    <p id="status" role="status" aria-live="polite"></p>
-  </main>
+          <div class="timer" id="timerDisplay" role="timer">25:00</div>
 
-  <script>
-    const $ = id => document.getElementById(id);
+          <div class="row wrap">
+            <button id="startTimerButton" class="primary" type="button">
+              Start
+            </button>
+            <button id="resetTimerButton" type="button">Reset</button>
+          </div>
 
-    const fileInput = $("fileInput");
-    const reader = $("reader");
-    const welcome = $("welcome");
-    const frame = $("pdfFrame");
-    const dropzone = $("dropzone");
-    const status = $("status");
+          <p id="timerStatus" class="muted small" role="status">
+            Ready for your next study session.
+          </p>
+        </section>
+      </aside>
+    </div>
 
-    let currentURL = null;
+    <p class="hint">
+      Use the built-in PDF toolbar for search, zoom, printing, and page
+      navigation. This app cannot read the viewer’s current page or page count.
+      Dark mode changes the interface, not the PDF colors.
+    </p>
+  </section>
 
-    // Read a saved theme preference when storage is available.
-    try {
-      document.body.classList.toggle(
-        "dark",
-        localStorage.getItem("paperview-theme") === "dark"
-      );
-    } catch {
-      // The reader still works when browser storage is restricted.
+  <p id="status" role="status" aria-live="polite"></p>
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const fileInput = $("fileInput");
+const frame = $("pdfFrame");
+const workspace = $("workspace");
+const welcome = $("welcome");
+const notes = $("notes");
+const status = $("status");
+
+let currentURL = null;
+let currentFile = null;
+let documentKey = null;
+let bookmarks = [];
+let openRequest = 0;
+let saveTimeout = null;
+
+function readStorage(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// THEME
+document.body.classList.toggle(
+  "dark",
+  readStorage("paperview-theme", "light") === "dark"
+);
+
+function updateTheme() {
+  const dark = document.body.classList.contains("dark");
+  $("themeButton").textContent = dark ? "Light mode" : "Dark mode";
+  $("themeButton").setAttribute("aria-pressed", String(dark));
+}
+
+updateTheme();
+
+$("themeButton").addEventListener("click", () => {
+  const dark = document.body.classList.toggle("dark");
+  writeStorage("paperview-theme", dark ? "dark" : "light");
+  updateTheme();
+});
+
+// FILES
+function choosePDF() {
+  fileInput.value = "";
+  fileInput.click();
+}
+
+$("chooseButton").addEventListener("click", choosePDF);
+$("replaceButton").addEventListener("click", choosePDF);
+
+fileInput.addEventListener("change", () => {
+  openPDF(fileInput.files[0]);
+});
+
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes} bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function saveDocument() {
+  clearTimeout(saveTimeout);
+  if (!documentKey) return;
+
+  const saved = writeStorage(documentKey, {
+    notes: notes.value,
+    bookmarks
+  });
+
+  $("saveStatus").textContent = saved
+    ? "Saved in this browser."
+    : "Browser storage unavailable or full. Export your notes.";
+}
+
+async function openPDF(file) {
+  if (!file) return;
+
+  const request = ++openRequest;
+  status.textContent = "Checking document…";
+
+  try {
+    const headerBytes = await file.slice(0, 1024).arrayBuffer();
+    if (request !== openRequest) return;
+
+    const header = new TextDecoder("latin1").decode(headerBytes);
+
+    if (!header.includes("%PDF-")) {
+      status.textContent = "Please select a valid PDF document.";
+      return;
     }
 
-    function updateThemeButton() {
-      const dark = document.body.classList.contains("dark");
-      $("themeButton").textContent = dark ? "Light mode" : "Dark mode";
-      $("themeButton").setAttribute("aria-pressed", String(dark));
+    // Use a local document identifier to restore notes and bookmarks.
+    // Browsers with Web Crypto use a hash of the complete file.
+    let identity;
+
+    if (globalThis.crypto?.subtle) {
+      const buffer = await file.arrayBuffer();
+      if (request !== openRequest) return;
+
+      const digest = await crypto.subtle.digest("SHA-256", buffer);
+      if (request !== openRequest) return;
+
+      identity = Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+    } else {
+      // Fallback may identify identical-name files as different after copying.
+      identity = JSON.stringify([file.name, file.size, file.lastModified]);
     }
 
-    updateThemeButton();
+    saveDocument();
 
-    $("themeButton").addEventListener("click", () => {
-      const dark = document.body.classList.toggle("dark");
-      updateThemeButton();
+    const nextURL = URL.createObjectURL(
+      new Blob([file], { type: "application/pdf" })
+    );
+    const previousURL = currentURL;
 
-      try {
-        localStorage.setItem("paperview-theme", dark ? "dark" : "light");
-      } catch {}
-    });
+    currentURL = nextURL;
+    currentFile = file;
+    documentKey = `paperview-document:${identity}`;
 
-    function chooseFile() {
-      // Allow selecting the same file again.
-      fileInput.value = "";
-      fileInput.click();
+    const saved = readStorage(documentKey, {});
+
+    notes.value = typeof saved?.notes === "string" ? saved.notes : "";
+    bookmarks = Array.isArray(saved?.bookmarks)
+      ? [...new Set(saved.bookmarks.filter(
+          page => Number.isSafeInteger(page) && page > 0
+        ))].sort((a, b) => a - b)
+      : [];
+
+    $("pageInput").value = 1;
+    $("fileName").textContent = file.name;
+    $("fileName").title = file.name;
+    $("fileSize").textContent = formatSize(file.size);
+
+    frame.src = `${nextURL}#page=1`;
+
+    $("openLink").href = nextURL;
+    $("downloadLink").href = nextURL;
+    $("downloadLink").download = file.name;
+
+    welcome.hidden = true;
+    workspace.hidden = false;
+
+    renderBookmarks();
+    saveDocument();
+
+    if (previousURL) URL.revokeObjectURL(previousURL);
+
+    status.textContent = "Document selected. Your study tools are ready.";
+    $("replaceButton").focus();
+  } catch {
+    if (request === openRequest) {
+      status.textContent = "Unable to open this file. Please try another PDF.";
     }
+  }
+}
 
-    $("chooseButton").addEventListener("click", chooseFile);
-    $("replaceButton").addEventListener("click", chooseFile);
+// PAGE SHORTCUTS
+function selectedPage() {
+  const page = Number($("pageInput").value);
 
-    function formatSize(bytes) {
-      if (bytes < 1024) return `${bytes} bytes`;
-      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (!Number.isSafeInteger(page) || page < 1) {
+    status.textContent = "Enter a whole page number greater than zero.";
+    $("pageInput").focus();
+    return null;
+  }
+
+  return page;
+}
+
+function goToPage(page) {
+  if (!currentURL) return;
+
+  $("pageInput").value = page;
+  frame.src = `${currentURL}#page=${page}`;
+  status.textContent =
+    `Requested page ${page}. Use the viewer toolbar if the shortcut is unsupported.`;
+}
+
+$("pageForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const page = selectedPage();
+  if (page !== null) goToPage(page);
+});
+
+// BOOKMARKS
+$("bookmarkButton").addEventListener("click", () => {
+  const page = selectedPage();
+  if (page === null || !documentKey) return;
+
+  if (bookmarks.includes(page)) {
+    status.textContent = `Page ${page} is already bookmarked.`;
+    return;
+  }
+
+  bookmarks.push(page);
+  bookmarks.sort((a, b) => a - b);
+  saveDocument();
+  renderBookmarks();
+  status.textContent = `Bookmarked page ${page}.`;
+});
+
+function renderBookmarks() {
+  const list = $("bookmarkList");
+  list.replaceChildren();
+  $("emptyBookmarks").hidden = bookmarks.length > 0;
+
+  for (const page of bookmarks) {
+    const item = document.createElement("li");
+    item.className = "bookmark";
+
+    const jump = document.createElement("button");
+    jump.type = "button";
+    jump.className = "jump";
+    jump.textContent = `🔖 Page ${page}`;
+    jump.addEventListener("click", () => goToPage(page));
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", `Remove bookmark for page ${page}`);
+
+    remove.addEventListener("click", () => {
+      bookmarks = bookmarks.filter(value => value !== page);
+      saveDocument();
+      renderBookmarks();
+      status.textContent = `Removed bookmark for page ${page}.`;
+
+      const nextButton = list.querySelector("button");
+      (nextButton || $("bookmarkButton")).focus();
+    });
+
+    item.append(jump, remove);
+    list.append(item);
+  }
+}
+
+// NOTES
+notes.addEventListener("input", () => {
+  $("saveStatus").textContent = "Saving…";
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveDocument, 400);
+});
+
+$("exportButton").addEventListener("click", () => {
+  if (!currentFile) return;
+
+  saveDocument();
+
+  const content = [
+    "PaperView Study Notes",
+    `Document: ${currentFile.name}`,
+    "",
+    "BOOKMARKED PAGES",
+    bookmarks.length ? bookmarks.join(", ") : "None",
+    "",
+    "NOTES",
+    notes.value || "No notes yet."
+  ].join("\n");
+
+  const url = URL.createObjectURL(
+    new Blob([content], { type: "text/plain;charset=utf-8" })
+  );
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download =
+    currentFile.name.replace(/\.pdf$/i, "") + "-notes.txt";
+
+  document.body.append(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+});
+
+// FOCUS MODE
+$("focusButton").addEventListener("click", () => {
+  const focused = document.body.classList.toggle("focus");
+  $("focusButton").textContent = focused ? "Exit focus" : "Focus";
+  $("focusButton").setAttribute("aria-pressed", String(focused));
+});
+
+// FULLSCREEN
+if (!document.fullscreenEnabled) {
+  $("fullscreenButton").hidden = true;
+}
+
+$("fullscreenButton").addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await workspace.requestFullscreen();
     }
+  } catch {
+    status.textContent = "Fullscreen is unavailable in this browser.";
+  }
+});
 
-    async function openPDF(file) {
-      if (!file) return;
+document.addEventListener("fullscreenchange", () => {
+  $("fullscreenButton").textContent = document.fullscreenElement
+    ? "Exit fullscreen"
+    : "Fullscreen";
+});
 
-      status.textContent = "Checking PDF…";
+// TIMER
+let duration = 25 * 60;
+let remaining = duration;
+let timerEnd = 0;
+let timerInterval = null;
+let running = false;
 
-      try {
-        // Check the PDF signature, rather than trusting the extension alone.
-        const bytes = new Uint8Array(
-          await file.slice(0, 1024).arrayBuffer()
-        );
+function updateTimerDisplay() {
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
 
-        const header = new TextDecoder("latin1").decode(bytes);
+  $("timerDisplay").textContent =
+    `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
-        if (!header.includes("%PDF-")) {
-          status.textContent = "Please choose a valid PDF file.";
-          return;
-        }
+function pauseTimer() {
+  if (running) {
+    remaining = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+  }
 
-        const pdfBlob = new Blob([file], { type: "application/pdf" });
-        const nextURL = URL.createObjectURL(pdfBlob);
-        const previousURL = currentURL;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  running = false;
 
-        currentURL = nextURL;
-        frame.src = nextURL;
+  $("startTimerButton").textContent = "Start";
+  updateTimerDisplay();
+}
 
-        $("fileName").textContent = file.name;
-        $("fileName").title = file.name;
-        $("fileSize").textContent = formatSize(file.size);
+function timerTick() {
+  remaining = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+  updateTimerDisplay();
 
-        $("openLink").href = nextURL;
-        $("downloadLink").href = nextURL;
-        $("downloadLink").download = file.name;
+  if (remaining === 0) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    running = false;
 
-        welcome.hidden = true;
-        reader.hidden = false;
+    $("startTimerButton").textContent = "Start";
+    $("timerStatus").textContent =
+      "Session complete! Take a short break.";
+    status.textContent = "Your study session is complete.";
+  }
+}
 
-        if (previousURL) URL.revokeObjectURL(previousURL);
+$("startTimerButton").addEventListener("click", () => {
+  if (running) {
+    pauseTimer();
+    $("timerStatus").textContent = "Timer paused.";
+    return;
+  }
 
-        status.textContent = "PDF selected. Read using the viewer below.";
-        $("replaceButton").focus();
-      } catch {
-        status.textContent = "This file could not be read. Please try again.";
-      }
-    }
+  if (remaining === 0) remaining = duration;
 
-    fileInput.addEventListener("change", () => {
-      openPDF(fileInput.files[0]);
-    });
+  timerEnd = Date.now() + remaining * 1000;
+  running = true;
 
-    // Prevent the browser from navigating away when a file is dropped.
-    window.addEventListener("dragover", event => event.preventDefault());
-    window.addEventListener("drop", event => event.preventDefault());
+  $("startTimerButton").textContent = "Pause";
+  $("timerStatus").textContent = "Focus on one idea at a time.";
 
-    let dragDepth = 0;
+  timerTick();
+  timerInterval = setInterval(timerTick, 250);
+});
 
-    dropzone.addEventListener("dragenter", event => {
-      event.preventDefault();
-      dragDepth++;
-      dropzone.classList.add("dragging");
-    });
+$("setTimerButton").addEventListener("click", () => {
+  const minutes = Number($("minutes").value);
 
-    dropzone.addEventListener("dragover", event => {
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-    });
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) {
+    $("timerStatus").textContent =
+      "Enter a whole number from 1 to 180 minutes.";
+    return;
+  }
 
-    dropzone.addEventListener("dragleave", () => {
-      dragDepth--;
-      if (dragDepth <= 0) {
-        dragDepth = 0;
-        dropzone.classList.remove("dragging");
-      }
-    });
+  pauseTimer();
+  duration = minutes * 60;
+  remaining = duration;
+  updateTimerDisplay();
+  $("timerStatus").textContent = "Timer updated. Ready to begin.";
+});
 
-    dropzone.addEventListener("drop", event => {
-      event.preventDefault();
-      dragDepth = 0;
-      dropzone.classList.remove("dragging");
-      openPDF(event.dataTransfer.files[0]);
-    });
+$("resetTimerButton").addEventListener("click", () => {
+  pauseTimer();
+  remaining = duration;
+  updateTimerDisplay();
+  $("timerStatus").textContent = "Timer reset.";
+});
 
-    if (!document.fullscreenEnabled) {
-      $("fullscreenButton").hidden = true;
-    }
+// DRAG AND DROP
+const dropzone = $("dropzone");
+let dragDepth = 0;
 
-    $("fullscreenButton").addEventListener("click", async () => {
-      try {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        } else {
-          await reader.requestFullscreen();
-        }
-      } catch {
-        status.textContent = "Fullscreen is unavailable in this browser.";
-      }
-    });
+window.addEventListener("dragover", event => event.preventDefault());
+window.addEventListener("drop", event => event.preventDefault());
 
-    document.addEventListener("fullscreenchange", () => {
-      $("fullscreenButton").textContent =
-        document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
-    });
+dropzone.addEventListener("dragenter", event => {
+  event.preventDefault();
+  dragDepth++;
+  dropzone.classList.add("dragging");
+});
 
-    $("closeButton").addEventListener("click", async () => {
-      if (document.fullscreenElement) {
-        try { await document.exitFullscreen(); } catch {}
-      }
+dropzone.addEventListener("dragover", event => {
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+});
 
-      frame.src = "about:blank";
+dropzone.addEventListener("dragleave", () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) dropzone.classList.remove("dragging");
+});
 
-      if (currentURL) {
-        URL.revokeObjectURL(currentURL);
-        currentURL = null;
-      }
+dropzone.addEventListener("drop", event => {
+  event.preventDefault();
+  dragDepth = 0;
+  dropzone.classList.remove("dragging");
+  openPDF(event.dataTransfer?.files[0]);
+});
 
-      $("openLink").removeAttribute("href");
-      $("downloadLink").removeAttribute("href");
-      fileInput.value = "";
+// CLOSE DOCUMENT
+$("closeButton").addEventListener("click", async () => {
+  ++openRequest;
+  saveDocument();
+  pauseTimer();
 
-      reader.hidden = true;
-      welcome.hidden = false;
-      status.textContent = "Document closed.";
-      $("chooseButton").focus();
-    });
+  if (document.fullscreenElement) {
+    try { await document.exitFullscreen(); } catch {}
+  }
 
-    window.addEventListener("pagehide", event => {
-      if (!event.persisted && currentURL) {
-        URL.revokeObjectURL(currentURL);
-      }
-    });
-  </script>
+  frame.src = "about:blank";
+
+  if (currentURL) URL.revokeObjectURL(currentURL);
+
+  currentURL = null;
+  currentFile = null;
+  documentKey = null;
+  bookmarks = [];
+
+  notes.value = "";
+  fileInput.value = "";
+
+  $("openLink").removeAttribute("href");
+  $("downloadLink").removeAttribute("href");
+
+  document.body.classList.remove("focus");
+  $("focusButton").textContent = "Focus";
+  $("focusButton").setAttribute("aria-pressed", "false");
+
+  workspace.hidden = true;
+  welcome.hidden = false;
+
+  status.textContent = "Document closed. Saved notes remain in this browser.";
+  $("chooseButton").focus();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") saveDocument();
+  if (document.visibilityState === "visible" && running) timerTick();
+});
+
+window.addEventListener("pagehide", event => {
+  saveDocument();
+  if (!event.persisted && currentURL) URL.revokeObjectURL(currentURL);
+});
+</script>
 </body>
 </html>
